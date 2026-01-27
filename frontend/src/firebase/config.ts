@@ -33,12 +33,12 @@ import { getFirestore } from 'firebase/firestore';
 // 🔥 REPLACE THESE VALUES WITH YOUR FIREBASE CONFIG 🔥
 // ========================================
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY_HERE",
-  authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_PROJECT_ID.appspot.com",
-  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyCCBVKdTz_rIqAlm-DR6JslyxUiMMaOzjE",
+  authDomain: "connect4-ai-game.firebaseapp.com",
+  projectId: "connect4-ai-game",
+  storageBucket: "connect4-ai-game.firebasestorage.app",
+  messagingSenderId: "383008470138",
+  appId: "1:383008470138:web:1d44a627fdb161c2ba37c3"
 };
 // ========================================
 // END OF FIREBASE CONFIG
@@ -47,8 +47,8 @@ const firebaseConfig = {
 // Check if Firebase is configured
 export const isFirebaseConfigured = () => {
   return (
-    firebaseConfig.apiKey !== "YOUR_API_KEY_HERE" &&
-    firebaseConfig.projectId !== "YOUR_PROJECT_ID"
+    firebaseConfig.apiKey !== "AIzaSyCCBVKdTz_rIqAlm-DR6JslyxUiMMaOzjE" &&
+    firebaseConfig.projectId !== "connect4-ai-game"
   );
 };
 
