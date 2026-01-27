@@ -47,8 +47,9 @@ const firebaseConfig = {
 // Check if Firebase is configured
 export const isFirebaseConfigured = () => {
   return (
-    firebaseConfig.apiKey !== "AIzaSyCCBVKdTz_rIqAlm-DR6JslyxUiMMaOzjE" &&
-    firebaseConfig.projectId !== "connect4-ai-game"
+    firebaseConfig.apiKey !== "YOUR_API_KEY_HERE" &&
+    firebaseConfig.projectId !== "YOUR_PROJECT_ID" &&
+    firebaseConfig.apiKey.length > 0
   );
 };
 
