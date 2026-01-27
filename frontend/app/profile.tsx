@@ -11,10 +11,12 @@ import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useUser } from '../src/context/UserContext';
+import { useTheme } from '../src/context/ThemeContext';
 
 export default function ProfileScreen() {
   const router = useRouter();
   const { user, refreshUser, isLoading } = useUser();
+  const { colors } = useTheme();
   const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
@@ -33,20 +35,20 @@ export default function ProfileScreen() {
 
   if (isLoading || !user) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#3B82F6" />
+          <ActivityIndicator size="large" color={colors.primary} />
         </View>
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity
-          style={styles.backButton}
+          style={[styles.backButton, { backgroundColor: colors.surface }]}
           onPress={() => router.back()}
         >
           <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
