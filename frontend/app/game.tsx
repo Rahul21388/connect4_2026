@@ -25,7 +25,9 @@ import { getEasyMove } from '../src/ai/easyAI';
 import { getMediumMove } from '../src/ai/mediumAI';
 import { getHardMove } from '../src/ai/minimax';
 import { useUser } from '../src/context/UserContext';
+import { useTheme } from '../src/context/ThemeContext';
 import { updateStats, GameResult } from '../src/firebase/firestore';
+import { soundService } from '../src/services/SoundService';
 
 type Difficulty = 'easy' | 'medium' | 'hard';
 type GameState = 'playing' | 'playerWin' | 'aiWin' | 'draw';
@@ -34,6 +36,7 @@ export default function GameScreen() {
   const router = useRouter();
   const { difficulty = 'medium' } = useLocalSearchParams<{ difficulty: Difficulty }>();
   const { user, refreshUser } = useUser();
+  const { colors, soundEnabled } = useTheme();
   
   const [board, setBoard] = useState<BoardState>(createEmptyBoard());
   const [isPlayerTurn, setIsPlayerTurn] = useState(true);
@@ -43,6 +46,10 @@ export default function GameScreen() {
   const [showResultModal, setShowResultModal] = useState(false);
   const [isAIThinking, setIsAIThinking] = useState(false);
   const [statsUpdated, setStatsUpdated] = useState(false);
+
+  useEffect(() => {
+    soundService.setEnabled(soundEnabled);
+  }, [soundEnabled]);
 
   // Get AI move based on difficulty
   const getAIMove = useCallback((currentBoard: BoardState): number => {
@@ -65,12 +72,15 @@ export default function GameScreen() {
       // Simulate thinking time for better UX
       const thinkingTime = difficulty === 'hard' ? 800 : 400;
       
-      const timer = setTimeout(() => {
+      const timer = setTimeout(async () => {
         const aiCol = getAIMove(board);
         
         if (aiCol !== -1) {
           const newBoard = makeMove(board, aiCol, 2);
           const dropRow = getDropRow(board, aiCol);
+          
+          // Play drop sound
+          if (soundEnabled) await soundService.playDrop();
           
           setBoard(newBoard);
           setLastMove({ row: dropRow, col: aiCol });
@@ -80,9 +90,11 @@ export default function GameScreen() {
             const cells = getWinningCells(newBoard, 2);
             setWinningCells(cells);
             setGameState('aiWin');
+            if (soundEnabled) await soundService.playLose();
             setShowResultModal(true);
           } else if (isBoardFull(newBoard)) {
             setGameState('draw');
+            if (soundEnabled) await soundService.playDraw();
             setShowResultModal(true);
           } else {
             setIsPlayerTurn(true);
@@ -94,7 +106,7 @@ export default function GameScreen() {
       
       return () => clearTimeout(timer);
     }
-  }, [isPlayerTurn, gameState, board, getAIMove, difficulty]);
+  }, [isPlayerTurn, gameState, board, getAIMove, difficulty, soundEnabled]);
 
   // Update stats when game ends
   useEffect(() => {
@@ -130,7 +142,7 @@ export default function GameScreen() {
   }, [gameState, user, statsUpdated, refreshUser]);
 
   // Handle player move
-  const handleColumnPress = (col: number) => {
+  const handleColumnPress = async (col: number) => {
     if (!isPlayerTurn || gameState !== 'playing' || isAIThinking) return;
     
     const validMoves = getValidMoves(board);
@@ -138,6 +150,9 @@ export default function GameScreen() {
     
     const dropRow = getDropRow(board, col);
     const newBoard = makeMove(board, col, 1);
+    
+    // Play drop sound
+    if (soundEnabled) await soundService.playDrop();
     
     setBoard(newBoard);
     setLastMove({ row: dropRow, col });
@@ -147,9 +162,11 @@ export default function GameScreen() {
       const cells = getWinningCells(newBoard, 1);
       setWinningCells(cells);
       setGameState('playerWin');
+      if (soundEnabled) await soundService.playWin();
       setShowResultModal(true);
     } else if (isBoardFull(newBoard)) {
       setGameState('draw');
+      if (soundEnabled) await soundService.playDraw();
       setShowResultModal(true);
     } else {
       setIsPlayerTurn(false);
@@ -157,7 +174,8 @@ export default function GameScreen() {
   };
 
   // Reset game
-  const handlePlayAgain = () => {
+  const handlePlayAgain = async () => {
+    if (soundEnabled) await soundService.playClick();
     setBoard(createEmptyBoard());
     setIsPlayerTurn(true);
     setGameState('playing');
@@ -171,13 +189,13 @@ export default function GameScreen() {
   const getResultMessage = () => {
     switch (gameState) {
       case 'playerWin':
-        return { title: 'You Win!', subtitle: 'Congratulations!', icon: 'trophy', color: '#22C55E' };
+        return { title: 'You Win!', subtitle: 'Congratulations!', icon: 'trophy', color: colors.success };
       case 'aiWin':
-        return { title: 'AI Wins', subtitle: 'Better luck next time!', icon: 'sad', color: '#EF4444' };
+        return { title: 'AI Wins', subtitle: 'Better luck next time!', icon: 'sad', color: colors.error };
       case 'draw':
-        return { title: "It's a Draw!", subtitle: 'Great game!', icon: 'remove', color: '#F59E0B' };
+        return { title: "It's a Draw!", subtitle: 'Great game!', icon: 'remove', color: colors.warning };
       default:
-        return { title: '', subtitle: '', icon: 'help', color: '#FFFFFF' };
+        return { title: '', subtitle: '', icon: 'help', color: colors.text };
     }
   };
 
@@ -195,18 +213,18 @@ export default function GameScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity
-          style={styles.backButton}
+          style={[styles.backButton, { backgroundColor: colors.surface }]}
           onPress={() => router.back()}
         >
-          <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
+          <Ionicons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
         <View style={styles.headerCenter}>
-          <Text style={styles.headerTitle}>Connect 4</Text>
-          <View style={styles.difficultyBadge}>
+          <Text style={[styles.headerTitle, { color: colors.text }]}>Connect 4</Text>
+          <View style={[styles.difficultyBadge, { backgroundColor: colors.primary }]}>
             <Text style={styles.difficultyText}>{getDifficultyLabel()}</Text>
           </View>
         </View>
@@ -217,16 +235,16 @@ export default function GameScreen() {
       <View style={styles.turnContainer}>
         <View style={[
           styles.turnIndicator,
-          isPlayerTurn ? styles.playerTurn : styles.aiTurn,
+          { backgroundColor: isPlayerTurn ? '#7F1D1D' : '#78350F' },
         ]}>
           <View style={[
             styles.turnDisc,
-            { backgroundColor: isPlayerTurn ? '#EF4444' : '#FBBF24' },
+            { backgroundColor: isPlayerTurn ? colors.playerDisc : colors.aiDisc },
           ]} />
           <Text style={styles.turnText}>
             {isAIThinking ? 'AI is thinking...' : (isPlayerTurn ? 'Your Turn' : 'AI Turn')}
           </Text>
-          {isAIThinking && <ActivityIndicator size="small" color="#FBBF24" style={{ marginLeft: 8 }} />}
+          {isAIThinking && <ActivityIndicator size="small" color={colors.aiDisc} style={{ marginLeft: 8 }} />}
         </View>
       </View>
 
@@ -244,12 +262,12 @@ export default function GameScreen() {
       {/* Legend */}
       <View style={styles.legend}>
         <View style={styles.legendItem}>
-          <View style={[styles.legendDisc, { backgroundColor: '#EF4444' }]} />
-          <Text style={styles.legendText}>You</Text>
+          <View style={[styles.legendDisc, { backgroundColor: colors.playerDisc }]} />
+          <Text style={[styles.legendText, { color: colors.textSecondary }]}>You</Text>
         </View>
         <View style={styles.legendItem}>
-          <View style={[styles.legendDisc, { backgroundColor: '#FBBF24' }]} />
-          <Text style={styles.legendText}>AI</Text>
+          <View style={[styles.legendDisc, { backgroundColor: colors.aiDisc }]} />
+          <Text style={[styles.legendText, { color: colors.textSecondary }]}>AI</Text>
         </View>
       </View>
 
@@ -260,16 +278,16 @@ export default function GameScreen() {
         animationType="fade"
       >
         <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
+          <View style={[styles.modalContent, { backgroundColor: colors.surface }]}>
             <View style={[styles.resultIcon, { backgroundColor: result.color + '20' }]}>
               <Ionicons name={result.icon as any} size={48} color={result.color} />
             </View>
             <Text style={[styles.resultTitle, { color: result.color }]}>{result.title}</Text>
-            <Text style={styles.resultSubtitle}>{result.subtitle}</Text>
+            <Text style={[styles.resultSubtitle, { color: colors.textSecondary }]}>{result.subtitle}</Text>
             
             <View style={styles.modalButtons}>
               <TouchableOpacity
-                style={styles.playAgainButton}
+                style={[styles.playAgainButton, { backgroundColor: colors.primary }]}
                 onPress={handlePlayAgain}
               >
                 <Ionicons name="refresh" size={24} color="#FFFFFF" />
@@ -277,11 +295,11 @@ export default function GameScreen() {
               </TouchableOpacity>
               
               <TouchableOpacity
-                style={styles.menuButton}
+                style={[styles.menuButton, { backgroundColor: colors.background, borderColor: colors.primary }]}
                 onPress={() => router.replace('/menu')}
               >
-                <Ionicons name="home" size={24} color="#3B82F6" />
-                <Text style={styles.menuButtonText}>Menu</Text>
+                <Ionicons name="home" size={24} color={colors.primary} />
+                <Text style={[styles.menuButtonText, { color: colors.primary }]}>Menu</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -294,7 +312,6 @@ export default function GameScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0F172A',
   },
   header: {
     flexDirection: 'row',
@@ -307,7 +324,6 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 12,
-    backgroundColor: '#1E293B',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -317,10 +333,8 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#FFFFFF',
   },
   difficultyBadge: {
-    backgroundColor: '#3B82F6',
     paddingHorizontal: 12,
     paddingVertical: 4,
     borderRadius: 12,
@@ -344,12 +358,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingVertical: 12,
     borderRadius: 24,
-  },
-  playerTurn: {
-    backgroundColor: '#7F1D1D',
-  },
-  aiTurn: {
-    backgroundColor: '#78350F',
   },
   turnDisc: {
     width: 24,
@@ -386,7 +394,6 @@ const styles = StyleSheet.create({
   },
   legendText: {
     fontSize: 14,
-    color: '#94A3B8',
   },
   modalOverlay: {
     flex: 1,
@@ -396,7 +403,6 @@ const styles = StyleSheet.create({
     padding: 24,
   },
   modalContent: {
-    backgroundColor: '#1E293B',
     borderRadius: 24,
     padding: 32,
     alignItems: 'center',
@@ -418,7 +424,6 @@ const styles = StyleSheet.create({
   },
   resultSubtitle: {
     fontSize: 16,
-    color: '#94A3B8',
     marginBottom: 32,
   },
   modalButtons: {
@@ -427,7 +432,6 @@ const styles = StyleSheet.create({
   },
   playAgainButton: {
     flexDirection: 'row',
-    backgroundColor: '#3B82F6',
     borderRadius: 16,
     height: 56,
     justifyContent: 'center',
@@ -441,18 +445,15 @@ const styles = StyleSheet.create({
   },
   menuButton: {
     flexDirection: 'row',
-    backgroundColor: '#0F172A',
     borderRadius: 16,
     height: 56,
     justifyContent: 'center',
     alignItems: 'center',
     gap: 8,
     borderWidth: 1,
-    borderColor: '#3B82F6',
   },
   menuButtonText: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#3B82F6',
   },
 });
