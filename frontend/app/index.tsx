@@ -14,12 +14,14 @@ import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useUser } from '../src/context/UserContext';
+import { useTheme } from '../src/context/ThemeContext';
 import { isFirebaseConfigured } from '../src/firebase/config';
 
 export default function LoginScreen() {
   const [username, setUsername] = useState('');
   const [loading, setLoading] = useState(false);
   const { user, isLoading, login } = useUser();
+  const { colors } = useTheme();
   const router = useRouter();
 
   // If user is already logged in, redirect to menu
@@ -66,16 +68,16 @@ export default function LoginScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#3B82F6" />
+          <ActivityIndicator size="large" color={colors.primary} />
         </View>
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardView}
@@ -83,21 +85,21 @@ export default function LoginScreen() {
         <View style={styles.content}>
           {/* Logo Section */}
           <View style={styles.logoSection}>
-            <View style={styles.logoContainer}>
-              <Ionicons name="grid" size={60} color="#3B82F6" />
+            <View style={[styles.logoContainer, { backgroundColor: colors.surface, borderColor: colors.primary }]}>
+              <Ionicons name="grid" size={60} color={colors.primary} />
             </View>
-            <Text style={styles.title}>Connect 4</Text>
-            <Text style={styles.subtitle}>Challenge the AI</Text>
+            <Text style={[styles.title, { color: colors.text }]}>Connect 4</Text>
+            <Text style={[styles.subtitle, { color: colors.textSecondary }]}>Challenge the AI</Text>
           </View>
 
           {/* Login Form */}
           <View style={styles.formSection}>
-            <View style={styles.inputContainer}>
-              <Ionicons name="person" size={24} color="#64748B" style={styles.inputIcon} />
+            <View style={[styles.inputContainer, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+              <Ionicons name="person" size={24} color={colors.textSecondary} style={styles.inputIcon} />
               <TextInput
-                style={styles.input}
+                style={[styles.input, { color: colors.text }]}
                 placeholder="Enter your username"
-                placeholderTextColor="#64748B"
+                placeholderTextColor={colors.textSecondary}
                 value={username}
                 onChangeText={setUsername}
                 autoCapitalize="none"
@@ -109,7 +111,7 @@ export default function LoginScreen() {
             </View>
 
             <TouchableOpacity
-              style={[styles.loginButton, loading && styles.loginButtonDisabled]}
+              style={[styles.loginButton, { backgroundColor: colors.primary }, loading && styles.loginButtonDisabled]}
               onPress={handleLogin}
               disabled={loading}
             >
@@ -123,18 +125,27 @@ export default function LoginScreen() {
               )}
             </TouchableOpacity>
 
-            <Text style={styles.infoText}>
+            <Text style={[styles.infoText, { color: colors.textSecondary }]}>
               Enter a username to save your progress.
               No password required!
             </Text>
           </View>
 
-          {/* Firebase Warning */}
+          {/* Firebase Status */}
           {!isFirebaseConfigured() && (
-            <View style={styles.warningContainer}>
+            <View style={[styles.warningContainer, { backgroundColor: '#422006' }]}>
               <Ionicons name="warning" size={20} color="#F59E0B" />
               <Text style={styles.warningText}>
                 Firebase not configured. Stats will not be saved.
+              </Text>
+            </View>
+          )}
+          
+          {isFirebaseConfigured() && (
+            <View style={[styles.successContainer, { backgroundColor: colors.success + '20' }]}>
+              <Ionicons name="checkmark-circle" size={20} color={colors.success} />
+              <Text style={[styles.successText, { color: colors.success }]}>
+                Cloud save enabled
               </Text>
             </View>
           )}
@@ -147,7 +158,6 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0F172A',
   },
   loadingContainer: {
     flex: 1,
@@ -170,22 +180,18 @@ const styles = StyleSheet.create({
     width: 120,
     height: 120,
     borderRadius: 30,
-    backgroundColor: '#1E293B',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 20,
     borderWidth: 2,
-    borderColor: '#3B82F6',
   },
   title: {
     fontSize: 36,
     fontWeight: 'bold',
-    color: '#FFFFFF',
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 18,
-    color: '#94A3B8',
   },
   formSection: {
     width: '100%',
@@ -193,12 +199,10 @@ const styles = StyleSheet.create({
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#1E293B',
     borderRadius: 16,
     paddingHorizontal: 16,
     marginBottom: 20,
     borderWidth: 1,
-    borderColor: '#334155',
   },
   inputIcon: {
     marginRight: 12,
@@ -207,11 +211,9 @@ const styles = StyleSheet.create({
     flex: 1,
     height: 56,
     fontSize: 16,
-    color: '#FFFFFF',
   },
   loginButton: {
     flexDirection: 'row',
-    backgroundColor: '#3B82F6',
     borderRadius: 16,
     height: 56,
     justifyContent: 'center',
@@ -228,7 +230,6 @@ const styles = StyleSheet.create({
   },
   infoText: {
     textAlign: 'center',
-    color: '#64748B',
     fontSize: 14,
     marginTop: 16,
     lineHeight: 20,
@@ -237,7 +238,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#422006',
     padding: 12,
     borderRadius: 12,
     marginTop: 24,
@@ -245,6 +245,18 @@ const styles = StyleSheet.create({
   },
   warningText: {
     color: '#FCD34D',
+    fontSize: 13,
+  },
+  successContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 12,
+    borderRadius: 12,
+    marginTop: 24,
+    gap: 8,
+  },
+  successText: {
     fontSize: 13,
   },
 });
