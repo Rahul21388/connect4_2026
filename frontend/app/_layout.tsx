@@ -1,16 +1,16 @@
 import React from 'react';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { View, StyleSheet } from 'react-native';
 import { UserProvider } from '../src/context/UserContext';
 import { ThemeProvider, useTheme } from '../src/context/ThemeContext';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { StyleSheet } from 'react-native';
 
 function RootLayoutNav() {
   const { isDarkMode, colors } = useTheme();
   
   return (
-    <>
+    <View style={{ flex: 1 }}>
       <StatusBar style={isDarkMode ? 'light' : 'dark'} />
       <Stack
         screenOptions={{
@@ -26,7 +26,7 @@ function RootLayoutNav() {
         <Stack.Screen name="leaderboard" />
         <Stack.Screen name="settings" />
       </Stack>
-    </>
+    </View>
   );
 }
 
