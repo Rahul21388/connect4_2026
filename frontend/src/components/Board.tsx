@@ -1,12 +1,5 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { View, StyleSheet, Dimensions } from 'react-native';
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withSpring,
-  withDelay,
-  runOnJS,
-} from 'react-native-reanimated';
 import { Column } from './Column';
 import { BoardState, ROWS, COLS } from '../ai/gameUtils';
 
@@ -30,18 +23,6 @@ export const Board: React.FC<BoardProps> = ({
   winningCells,
   lastMove,
 }) => {
-  const dropAnimation = useSharedValue(0);
-
-  useEffect(() => {
-    if (lastMove) {
-      dropAnimation.value = 0;
-      dropAnimation.value = withSpring(1, {
-        damping: 8,
-        stiffness: 100,
-      });
-    }
-  }, [lastMove]);
-
   // Transform board to column-based for rendering
   const getColumnData = (colIndex: number): number[] => {
     return board.map((row) => row[colIndex]);
