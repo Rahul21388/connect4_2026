@@ -1,11 +1,5 @@
 import React from 'react';
 import { TouchableOpacity, View, StyleSheet } from 'react-native';
-import Animated, {
-  useAnimatedStyle,
-  withSequence,
-  withTiming,
-  useSharedValue,
-} from 'react-native-reanimated';
 import { Disc } from './Disc';
 
 interface ColumnProps {
@@ -25,21 +19,11 @@ export const Column: React.FC<ColumnProps> = ({
   winningCells,
   cellSize,
 }) => {
-  const scale = useSharedValue(1);
-
   const handlePress = () => {
     if (!disabled) {
-      scale.value = withSequence(
-        withTiming(0.95, { duration: 50 }),
-        withTiming(1, { duration: 50 })
-      );
       onPress(columnIndex);
     }
   };
-
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
-  }));
 
   const isWinningCell = (row: number): boolean => {
     if (!winningCells) return false;
@@ -54,7 +38,7 @@ export const Column: React.FC<ColumnProps> = ({
       disabled={disabled}
       activeOpacity={0.7}
     >
-      <Animated.View style={[styles.column, animatedStyle]}>
+      <View style={styles.column}>
         {columnData.map((cell, rowIndex) => (
           <View
             key={rowIndex}
@@ -73,7 +57,7 @@ export const Column: React.FC<ColumnProps> = ({
             />
           </View>
         ))}
-      </Animated.View>
+      </View>
     </TouchableOpacity>
   );
 };
