@@ -1,11 +1,5 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
-import Animated, {
-  useAnimatedStyle,
-  withSpring,
-  withTiming,
-  interpolate,
-} from 'react-native-reanimated';
 
 interface DiscProps {
   player: number; // 0 = empty, 1 = player, 2 = AI
@@ -25,21 +19,6 @@ export const Disc: React.FC<DiscProps> = ({ player, isWinning = false, size }) =
     }
   };
 
-  const animatedStyle = useAnimatedStyle(() => {
-    return {
-      transform: [
-        {
-          scale: withSpring(isWinning ? 1.1 : 1, {
-            damping: 10,
-            stiffness: 100,
-          }),
-        },
-      ],
-      borderWidth: isWinning ? 3 : 0,
-      borderColor: '#FFFFFF',
-    };
-  });
-
   if (player === 0) {
     return (
       <View
@@ -56,7 +35,7 @@ export const Disc: React.FC<DiscProps> = ({ player, isWinning = false, size }) =
   }
 
   return (
-    <Animated.View
+    <View
       style={[
         styles.disc,
         {
@@ -64,12 +43,14 @@ export const Disc: React.FC<DiscProps> = ({ player, isWinning = false, size }) =
           height: size - 8,
           borderRadius: (size - 8) / 2,
           backgroundColor: getDiscColor(),
+          transform: [{ scale: isWinning ? 1.1 : 1 }],
+          borderWidth: isWinning ? 3 : 0,
+          borderColor: '#FFFFFF',
         },
-        animatedStyle,
       ]}
     >
       <View style={[styles.discHighlight, { borderRadius: (size - 8) / 2 }]} />
-    </Animated.View>
+    </View>
   );
 };
 
